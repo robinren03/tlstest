@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <openssl/ssl.h>
+#include <openssl/ssl2.h>
 #include <openssl/err.h>
 
 #define MAXBUF 1024
