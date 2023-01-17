@@ -1,0 +1,5 @@
+#ifndef _TLSTEST_COMMON_CONF
+#define _TLSTEST_COMMON_CONF
+
+#define SOCKET_BUF_MAXLEN 4096
+#endif

