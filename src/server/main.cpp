@@ -71,12 +71,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    BIO* out_s, in_s;
-    int out_fd, in_fd;
-
-    out_s = SSL_R_BIO_NOT_SET;
-    in_s = SSL_F_SSL_LOAD_CLIENT_CA_FILE;
-
     int valid = SSL_CTX_set_cipher_list(ctx, SSL2_TXT_DES_64_CBC_WITH_MD5);
     if (valid) {
         ERR_print_errors_fp(stdout);
@@ -136,8 +130,6 @@ int main(int argc, char **argv) {
     while (1) {
         SSL *ssl;
         len = sizeof(struct sockaddr);
-        BIO* in_bio = BIO_new(BIO_s_mem());
-        BIO* out_bio = BIO_new(B)
         /* 等待客户端连上来 */
         if ((new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &len))
                 == -1) {
