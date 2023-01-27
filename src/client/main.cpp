@@ -10,6 +10,7 @@
 #include <openssl/ssl.h>
 #include <openssl/ssl2.h>
 #include <openssl/err.h>
+#include "client.h"
 
 #define MAXBUF 1024
 
@@ -19,8 +20,6 @@ void ShowCerts(SSL * ssl)
     char *line;
 
     cert = SSL_get_peer_certificate(ssl);
-    // SSL_get_verify_result()是重点，SSL_CTX_set_verify()只是配置启不启用并没有执行认证，调用该函数才会真证进行证书认证
-    // 如果验证不通过，那么程序抛出异常中止连接
     if(SSL_get_verify_result(ssl) == X509_V_OK){
         printf("证书验证通过\n");
     }
@@ -59,7 +58,6 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stdout);
     }
 
-    // OpenSSL_add_all_algorithms(); Maybe only SSL2_TXT_DES_64_CBC_WITH_MD5
     SSL_load_error_strings();
     ctx = SSL_CTX_new(SSLv23_client_method());
     if (ctx == NULL) {
@@ -120,22 +118,24 @@ int main(int argc, char **argv)
         exit(errno);
     }
     printf("server connected\n");
-
-    /* 基于 ctx 产生一个新的 SSL */
+    
+    T_Client* cli = new T_Client(ctx, sockfd);
+    cli->handshake();
+    /* build a new ssl based on ctx
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, sockfd);
-    /* 建立 SSL 连接 */
     if (SSL_connect(ssl) == -1)
         ERR_print_errors_fp(stderr);
     else {
         printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
         ShowCerts(ssl);
     }
+    */
 
     /* 接收对方发过来的消息，最多接收 MAXBUF 个字节 */
     bzero(buffer, MAXBUF + 1);
     /* 接收服务器来的消息 */
-    len = SSL_read(ssl, buffer, MAXBUF);
+    len = cli->client_recv(buffer);
     if (len > 0)
         printf("接收消息成功:'%s'，共%d个字节的数据\n",
                buffer, len);
@@ -143,12 +143,12 @@ int main(int argc, char **argv)
         printf
             ("消息接收失败！错误代码是%d，错误信息是'%s'\n",
              errno, strerror(errno));
-        goto finish;
     }
+    
     bzero(buffer, MAXBUF + 1);
     strcpy(buffer, "from client->server");
     /* 发消息给服务器 */
-    len = SSL_write(ssl, buffer, strlen(buffer));
+    cli->client_send(buffer, strlen(buffer));
     if (len < 0)
         printf
             ("消息'%s'发送失败！错误代码是%d，错误信息是'%s'\n",
@@ -157,10 +157,8 @@ int main(int argc, char **argv)
         printf("消息'%s'发送成功，共发送了%d个字节！\n",
                buffer, len);
 
-  finish:
     /* 关闭连接 */
-    SSL_shutdown(ssl);
-    SSL_free(ssl);
+    delete cli;
     close(sockfd);
     SSL_CTX_free(ctx);
     return 0;

@@ -14,33 +14,6 @@
 
 #define MAXBUF 1024
 
-void ShowCerts(SSL * ssl)
-{
-    X509 *cert;
-    char *line;
-
-    cert = SSL_get_peer_certificate(ssl);
-    // SSL_get_verify_result()是重点，SSL_CTX_set_verify()只是配置启不启用并没有执行认证，调用该函数才会真证进行证书认证
-    // 如果验证不通过，那么程序抛出异常中止连接
-    if(SSL_get_verify_result(ssl) == X509_V_OK){
-        printf("证书验证通过\n");
-    }
-    if (cert != NULL) {
-        printf("数字证书信息:\n");
-        line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
-        printf("证书: %s\n", line);
-        free(line);
-        line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
-        printf("颁发者: %s\n", line);
-        free(line);
-        X509_free(cert);
-    } else
-        printf("无证书信息！\n");
-}
-
-void handle_send(BIO* out_bio, SSL* ssl) {
-
-}
 int main(int argc, char **argv) {
     int sockfd, new_fd;
     socklen_t len;
@@ -128,7 +101,6 @@ int main(int argc, char **argv) {
         printf("begin listen\n");
 
     while (1) {
-        SSL *ssl;
         len = sizeof(struct sockaddr);
         /* 等待客户端连上来 */
         if ((new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &len))
@@ -140,46 +112,32 @@ int main(int argc, char **argv) {
                     inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port),
                     new_fd);
 
-        /* 基于 ctx 产生一个新的 SSL */
+        /* 基于 ctx 产生一个新的 SSL 
         ssl = SSL_new(ctx);
-        /* 将连接用户的 socket 加入到 SSL */
         SSL_set_fd(ssl, new_fd);
-        /* 建立 SSL 连接 */
         if (SSL_accept(ssl) == -1) {
             perror("accept");
             close(new_fd);
             break;
         }
-        ShowCerts(ssl);
+        */
+        T_Server* sev = new T_Server(ctx, new_fd);
+        sev->show_certs();
 
         /* 开始处理每个新连接上的数据收发 */
         bzero(buf, MAXBUF + 1);
         strcpy(buf, "server->client");
-        /* 发消息给客户端 */
-        len = SSL_write(ssl, buf, strlen(buf));
-
-        if (len <= 0) {
-            printf("消息'%s'发送失败！错误代码是%d，错误信息是'%s'\n", buf, errno,
-                    strerror(errno));
-            goto finish;
-        } else
-            printf("消息'%s'发送成功，共发送了%d个字节！\n", buf, len);
+        sev->server_send(buf, strlen(buf));
 
         bzero(buf, MAXBUF + 1);
         /* 接收客户端的消息 */
-        len = SSL_read(ssl, buf, MAXBUF);
+        len = sev->server_recv(buf);
         if (len > 0)
             printf("接收消息成功:'%s'，共%d个字节的数据\n", buf, len);
         else
             printf("消息接收失败！错误代码是%d，错误信息是'%s'\n",
             errno, strerror(errno));
-        /* 处理每个新连接上的数据收发结束 */
-        finish:
-        /* 关闭 SSL 连接 */
-        SSL_shutdown(ssl);
-        /* 释放 SSL */
-        SSL_free(ssl);
-        /* 关闭 socket */
+        
         close(new_fd);
     }
     /* 关闭监听的 socket */

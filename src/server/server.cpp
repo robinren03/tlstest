@@ -25,6 +25,7 @@ T_Server::T_Server(SSL_CTX* ctx, int _fd):fd(_fd){
 }
 
 T_Server::~T_Server(){
+    SSL_shutdown(ssl);
     SSL_free(ssl);
     delete[] socket_buf;
     delete[] ssl_buf;
@@ -71,3 +72,28 @@ int T_Server::server_recv(char* buf){
 char* T_Server::get_encrypted_text(){
     return socket_buf;
 }
+
+void T_Server::show_certs()
+{
+    X509 *cert;
+    char *line;
+
+    cert = SSL_get_peer_certificate(ssl);
+    // SSL_get_verify_result()是重点，SSL_CTX_set_verify()只是配置启不启用并没有执行认证，调用该函数才会真证进行证书认证
+    // 如果验证不通过，那么程序抛出异常中止连接
+    if(SSL_get_verify_result(ssl) == X509_V_OK){
+        printf("证书验证通过\n");
+    }
+    if (cert != NULL) {
+        printf("数字证书信息:\n");
+        line = X509_NAME_oneline(X509_get_subject_name(cert), 0, 0);
+        printf("证书: %s\n", line);
+        free(line);
+        line = X509_NAME_oneline(X509_get_issuer_name(cert), 0, 0);
+        printf("颁发者: %s\n", line);
+        free(line);
+        X509_free(cert);
+    } else
+        printf("无证书信息！\n");
+}
+

@@ -19,7 +19,6 @@ public:
     ~T_Client();
 
     void handshake();
-    void shutdown();
     int client_send(char* buf, int len);
     int client_recv(char* buf); //buf here is allocated by socket_buf
     char* get_encrypted_text();

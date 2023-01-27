@@ -19,6 +19,7 @@ public:
     ~T_Server();
 
     void handshake();
+    void show_certs();
     int server_send(char* buf, int len);
     int server_recv(char* buf); //buf here is allocated by socket_buf
     char* get_encrypted_text();
