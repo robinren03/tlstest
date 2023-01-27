@@ -1,0 +1,38 @@
+# Compiled files
+*.d
+*.o
+*.obj
+*.out
+*.exe
+*.a
+
+# data
+*.dat
+
+# log
+*.key
+*.tree
+
+# Build
+build
+
+# VSCode, IDEA
+.vscode
+.IDEA
+
+# DS_STORE
+.DS_STORE
+
+# CMake
+bin/
+build/
+CMakeLists.txt.user
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
