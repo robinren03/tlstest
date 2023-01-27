@@ -11,8 +11,8 @@
 #include <openssl/ssl2.h>
 #include <openssl/err.h>
 #include "client.h"
-
-#define MAXBUF 1024
+#include "conf.h"
+#include "instruction.h"
 
 void ShowCerts(SSL * ssl)
 {
@@ -132,6 +132,24 @@ int main(int argc, char **argv)
     }
     */
 
+    int ctrl_fd;
+    bzero(&dest, sizeof(dest));
+    dest.sin_family = AF_INET;
+    dest.sin_port = htons(atoi(argv[4]));
+    if (inet_aton(argv[3], (struct in_addr *) &dest.sin_addr.s_addr) == 0) {
+        perror(argv[3]);
+        exit(errno);
+    }
+    printf("controller address created\n");
+
+    /* 连接服务器 */
+    if (connect(ctrl_fd, (struct sockaddr *) &dest, sizeof(dest)) != 0) {
+        perror("Connect ");
+        exit(errno);
+    }
+    printf("controller connected\n");
+
+
     /* 接收对方发过来的消息，最多接收 MAXBUF 个字节 */
     bzero(buffer, MAXBUF + 1);
     /* 接收服务器来的消息 */
@@ -156,10 +174,28 @@ int main(int argc, char **argv)
     else
         printf("消息'%s'发送成功，共发送了%d个字节！\n",
                buffer, len);
+    
+    bool cont = true;
+    while(cont){
+        T_Instr inst;
+        int len = recv(ctrl_fd, &inst, sizeof(T_Instr), 1);
+        if (len<=0) break;
+        switch (inst){
+            case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:
+                int len = recv(ctrl_fd, buffer, MAXBUF, 0);
+                cli->client_send(buffer, len);
+                break;
 
+            case T_Instr::SHUTDOWN_CONNECTION: 
+                cont = false;
+                break;
+            default: break;
+        }
+    }
     /* 关闭连接 */
     delete cli;
     close(sockfd);
+    close(ctrl_fd);
     SSL_CTX_free(ctx);
     return 0;
 }

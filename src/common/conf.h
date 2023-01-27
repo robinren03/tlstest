@@ -2,4 +2,5 @@
 #define _TLSTEST_COMMON_CONF
 
 #define SOCKET_BUF_MAXLEN 4096
+#define MAXBUF 1024
 #endif

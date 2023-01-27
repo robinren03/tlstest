@@ -17,7 +17,7 @@ private:
     char* first_r;
     char* last_recv;
     int max_len;
-    const int block_size = 32;
+    const int block_size;
     T_Controller* ctrl;
 
 public:

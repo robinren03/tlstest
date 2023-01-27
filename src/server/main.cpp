@@ -11,6 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl2.h>
 #include "server.h"
+#include "instruction.h"
 
 #define MAXBUF 1024
 
@@ -100,6 +101,7 @@ int main(int argc, char **argv) {
     } else
         printf("begin listen\n");
 
+
     while (1) {
         len = sizeof(struct sockaddr);
         /* 等待客户端连上来 */
@@ -111,7 +113,6 @@ int main(int argc, char **argv) {
             printf("server: got connection from %s, port %d, socket %d\n",
                     inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port),
                     new_fd);
-
         /* 基于 ctx 产生一个新的 SSL 
         ssl = SSL_new(ctx);
         SSL_set_fd(ssl, new_fd);
@@ -123,6 +124,24 @@ int main(int argc, char **argv) {
         */
         T_Server* sev = new T_Server(ctx, new_fd);
         sev->show_certs();
+
+        struct sockaddr_in dest;
+        int ctrl_fd;
+        bzero(&dest, sizeof(dest));
+        dest.sin_family = AF_INET;
+        dest.sin_port = htons(atoi(argv[6]));
+        if (inet_aton(argv[5], (struct in_addr *) &dest.sin_addr.s_addr) == 0) {
+            perror(argv[5]);
+            exit(errno);
+        }
+        printf("controller address created\n");
+
+        /* 连接服务器 */
+        if (connect(ctrl_fd, (struct sockaddr *) &dest, sizeof(dest)) != 0) {
+            perror("Connect ");
+            exit(errno);
+        }
+        printf("controller connected\n");
 
         /* 开始处理每个新连接上的数据收发 */
         bzero(buf, MAXBUF + 1);
@@ -138,7 +157,26 @@ int main(int argc, char **argv) {
             printf("消息接收失败！错误代码是%d，错误信息是'%s'\n",
             errno, strerror(errno));
         
+        bool cont = true;
+        while(cont){
+            T_Instr inst;
+            int len = recv(ctrl_fd, &inst, sizeof(T_Instr), 1);
+            if (len<=0) break;
+            switch (inst){
+                case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:
+                    int len = recv(ctrl_fd, buf, MAXBUF, 0);
+                    sev->server_send(buf, len);
+                break;
+
+                case T_Instr::SHUTDOWN_CONNECTION: 
+                    cont = false;
+                    break;
+                default: break;
+            }
+        }
+        delete sev;
         close(new_fd);
+        close(ctrl_fd);
     }
     /* 关闭监听的 socket */
     close(sockfd);
