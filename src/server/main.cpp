@@ -11,7 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/ssl2.h>
 #include "server.h"
-#include "instruction.h"
+#include "../common/instruction.h"
 
 #define MAXBUF 1024
 
@@ -125,8 +125,14 @@ int main(int argc, char **argv) {
         T_Server* sev = new T_Server(ctx, new_fd);
         sev->show_certs();
 
-        struct sockaddr_in dest;
         int ctrl_fd;
+        if ((ctrl_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+            perror("Socket");
+            exit(errno);
+        }
+        printf("socket created\n");
+        struct sockaddr_in dest;
+
         bzero(&dest, sizeof(dest));
         dest.sin_family = AF_INET;
         dest.sin_port = htons(atoi(argv[6]));
@@ -163,14 +169,16 @@ int main(int argc, char **argv) {
             int len = recv(ctrl_fd, &inst, sizeof(T_Instr), 1);
             if (len<=0) break;
             switch (inst){
-                case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:
+                case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:{
                     int len = recv(ctrl_fd, buf, MAXBUF, 0);
                     sev->server_send(buf, len);
-                break;
-
-                case T_Instr::SHUTDOWN_CONNECTION: 
+                    break;
+                }
+                case T_Instr::SHUTDOWN_CONNECTION: {
                     cont = false;
                     break;
+                }
+
                 default: break;
             }
         }

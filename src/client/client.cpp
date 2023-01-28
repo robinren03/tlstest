@@ -1,6 +1,6 @@
 #include "client.h"
 #include <sys/socket.h>
-#include "conf.h"
+#include "../common/conf.h"
 
 T_Client::T_Client(SSL_CTX* ctx, int _fd):fd(_fd){
     ssl = SSL_new(ctx);

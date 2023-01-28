@@ -1,6 +1,6 @@
 #ifndef _TLSTEST_CONTROLLER
 #define _TLSTEST_CONTROLLER
-#include "instruction.h"
+#include "../common/instruction.h"
 
 class T_Controller{
 private:

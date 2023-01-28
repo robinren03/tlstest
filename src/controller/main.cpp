@@ -8,7 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include "conf.h"
+#include "../common/conf.h"
 #include "controller.h"
 #include "beast.h"
 

@@ -1,5 +1,5 @@
 #include "beast.h"
-#include "utils.h"
+#include "../common/utils.h"
 
 BeastDecrypter::BeastDecrypter(int max_len, int _block_size, T_Controller* _ctrl):block_size(_block_size), ctrl(_ctrl){
     buf = (char*)malloc(max_len);

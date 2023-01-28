@@ -11,8 +11,8 @@
 #include <openssl/ssl2.h>
 #include <openssl/err.h>
 #include "client.h"
-#include "conf.h"
-#include "instruction.h"
+#include "../common/conf.h"
+#include "../common/instruction.h"
 
 void ShowCerts(SSL * ssl)
 {
@@ -42,7 +42,6 @@ int main(int argc, char **argv)
     struct sockaddr_in dest;
     char buffer[MAXBUF + 1];
     SSL_CTX *ctx;
-    SSL *ssl;
 
     if (argc != 5) {
         printf("参数格式错误！正确用法如下：\n\t\t%s IP地址 端口\n\t比如:\t%s 127.0.0.1 80\n此程序用来从某个"
@@ -53,11 +52,6 @@ int main(int argc, char **argv)
 
     /* SSL 库初始化，参看 ssl-server.c 代码 */
     SSL_library_init();
-    int valid = SSL_set_cipher_list(ssl, SSL2_TXT_DES_64_CBC_WITH_MD5);
-    if (valid) {
-        ERR_print_errors_fp(stdout);
-    }
-
     SSL_load_error_strings();
     ctx = SSL_CTX_new(SSLv23_client_method());
     if (ctx == NULL) {
@@ -65,7 +59,7 @@ int main(int argc, char **argv)
         exit(1);
     }
 
-    valid = SSL_CTX_set_cipher_list(ctx, SSL2_TXT_DES_64_CBC_WITH_MD5);
+    int valid = SSL_CTX_set_cipher_list(ctx, SSL2_TXT_DES_64_CBC_WITH_MD5);
     if (valid) {
         ERR_print_errors_fp(stdout);
     }
@@ -133,6 +127,12 @@ int main(int argc, char **argv)
     */
 
     int ctrl_fd;
+    if ((ctrl_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+        perror("Socket");
+        exit(errno);
+    }
+    printf("socket created\n");
+
     bzero(&dest, sizeof(dest));
     dest.sin_family = AF_INET;
     dest.sin_port = htons(atoi(argv[4]));
@@ -181,14 +181,15 @@ int main(int argc, char **argv)
         int len = recv(ctrl_fd, &inst, sizeof(T_Instr), 1);
         if (len<=0) break;
         switch (inst){
-            case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:
+            case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:{
                 int len = recv(ctrl_fd, buffer, MAXBUF, 0);
                 cli->client_send(buffer, len);
                 break;
-
-            case T_Instr::SHUTDOWN_CONNECTION: 
+            }
+            case T_Instr::SHUTDOWN_CONNECTION: {
                 cont = false;
                 break;
+            }
             default: break;
         }
     }

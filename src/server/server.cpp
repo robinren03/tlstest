@@ -1,6 +1,6 @@
 #include "server.h"
 #include <sys/socket.h>
-#include "conf.h"
+#include "../common/conf.h"
 
 T_Server::T_Server(SSL_CTX* ctx, int _fd):fd(_fd){
     ssl = SSL_new(ctx);
