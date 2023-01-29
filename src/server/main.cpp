@@ -23,15 +23,14 @@ int main(int argc, char **argv) {
     char buf[MAXBUF + 1];
     SSL_CTX *ctx;
 
-    if (argv[1])
-        myport = atoi(argv[1]);
-    else
-        myport = 7838;
+    if (argc != 7) {
+        printf("wrong format of arguments, please follow the guidelines on README\n");
+        exit(0);
+    }
 
-    if (argv[2])
-        lisnum = atoi(argv[2]);
-    else
-        lisnum = 2;
+    myport = atoi(argv[1]); //7838
+
+    lisnum = atoi(argv[2]); //2
 
     /* SSL 库初始化 */
     SSL_library_init();
@@ -48,16 +47,6 @@ int main(int argc, char **argv) {
     int valid = SSL_CTX_set_cipher_list(ctx, SSL2_TXT_DES_64_CBC_WITH_MD5);
     if (valid) {
         ERR_print_errors_fp(stdout);
-    }
-
-    // 双向验证
-    // SSL_VERIFY_PEER---要求对证书进行认证，没有证书也会放行
-    // SSL_VERIFY_FAIL_IF_NO_PEER_CERT---要求客户端需要提供证书，但验证发现单独使用没有证书也会放行
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
-    // 设置信任根证书
-    if (SSL_CTX_load_verify_locations(ctx, "ca.crt",NULL)<=0){
-        ERR_print_errors_fp(stdout);
-        exit(1);
     }
 
     /* 载入用户的数字证书， 此证书用来发送给客户端。 证书里包含有公钥 */

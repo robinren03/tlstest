@@ -43,10 +43,8 @@ int main(int argc, char **argv)
     char buffer[MAXBUF + 1];
     SSL_CTX *ctx;
 
-    if (argc != 5) {
-        printf("参数格式错误！正确用法如下：\n\t\t%s IP地址 端口\n\t比如:\t%s 127.0.0.1 80\n此程序用来从某个"
-             "IP 地址的服务器某个端口接收最多 MAXBUF 个字节的消息",
-             argv[0], argv[0]);
+    if (argc != 7) {
+        printf("wrong format of arguments, please follow the guidelines on README");
         exit(0);
     }
 
@@ -62,31 +60,6 @@ int main(int argc, char **argv)
     int valid = SSL_CTX_set_cipher_list(ctx, SSL2_TXT_DES_64_CBC_WITH_MD5);
     if (valid) {
         ERR_print_errors_fp(stdout);
-    }
-    // 双向验证
-    // SSL_VERIFY_PEER---要求对证书进行认证，没有证书也会放行
-    // SSL_VERIFY_FAIL_IF_NO_PEER_CERT---要求客户端需要提供证书，但验证发现单独使用没有证书也会放行
-    SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, NULL);
-    // 设置信任根证书
-    if (SSL_CTX_load_verify_locations(ctx, "ca.crt",NULL)<=0){
-        ERR_print_errors_fp(stdout);
-        exit(1);
-    }
-
-    /* 载入用户的数字证书， 此证书用来发送给客户端。 证书里包含有公钥 */
-    if (SSL_CTX_use_certificate_file(ctx, argv[3], SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stdout);
-        exit(1);
-    }
-    /* 载入用户私钥 */
-    if (SSL_CTX_use_PrivateKey_file(ctx, argv[4], SSL_FILETYPE_PEM) <= 0) {
-        ERR_print_errors_fp(stdout);
-        exit(1);
-    }
-    /* 检查用户私钥是否正确 */
-    if (!SSL_CTX_check_private_key(ctx)) {
-        ERR_print_errors_fp(stdout);
-        exit(1);
     }
 
     /* 创建一个 socket 用于 tcp 通信 */
@@ -135,9 +108,9 @@ int main(int argc, char **argv)
 
     bzero(&dest, sizeof(dest));
     dest.sin_family = AF_INET;
-    dest.sin_port = htons(atoi(argv[4]));
-    if (inet_aton(argv[3], (struct in_addr *) &dest.sin_addr.s_addr) == 0) {
-        perror(argv[3]);
+    dest.sin_port = htons(atoi(argv[6]));
+    if (inet_aton(argv[5], (struct in_addr *) &dest.sin_addr.s_addr) == 0) {
+        perror(argv[5]);
         exit(errno);
     }
     printf("controller address created\n");

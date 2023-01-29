@@ -20,6 +20,11 @@ int main(int argc, char **argv) {
     unsigned int myport, lisnum;
     char buf[MAXBUF + 1];
 
+    if (argc != 2 && argc != 4) {
+        printf("wrong format of arguments, please follow the guidelines on README\n");
+        exit(0);
+    }
+
     in_addr server_addr;
     if (inet_aton(argv[1], &server_addr) == 0) {
         perror(argv[1]);
