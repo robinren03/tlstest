@@ -44,11 +44,13 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    int valid = SSL_CTX_set_cipher_list(ctx, SSL2_TXT_DES_64_CBC_WITH_MD5);
-    if (valid) {
+    int valid = SSL_CTX_set_cipher_list(ctx, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    if (valid != 1) {
         ERR_print_errors_fp(stdout);
     }
 
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL); 
+    
     /* 载入用户的数字证书， 此证书用来发送给客户端。 证书里包含有公钥 */
     if (SSL_CTX_use_certificate_file(ctx, argv[3], SSL_FILETYPE_PEM) <= 0) {
         ERR_print_errors_fp(stdout);
@@ -112,6 +114,7 @@ int main(int argc, char **argv) {
         }
         */
         T_Server* sev = new T_Server(ctx, new_fd);
+        sev->handshake();
         sev->show_certs();
 
         int ctrl_fd;
@@ -137,6 +140,10 @@ int main(int argc, char **argv) {
             exit(errno);
         }
         printf("controller connected\n");
+
+        bzero(buf, MAXBUF + 1);
+        strcpy(buf, "server");
+        send(ctrl_fd, buf, strlen(buf), 0);
 
         /* 开始处理每个新连接上的数据收发 */
         bzero(buf, MAXBUF + 1);

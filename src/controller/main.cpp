@@ -20,30 +20,30 @@ int main(int argc, char **argv) {
     unsigned int myport, lisnum;
     char buf[MAXBUF + 1];
 
-    if (argc != 2 && argc != 4) {
+    if (argc != 3 && argc != 5) {
         printf("wrong format of arguments, please follow the guidelines on README\n");
         exit(0);
     }
 
-    in_addr server_addr;
-    if (inet_aton(argv[1], &server_addr) == 0) {
-        perror(argv[1]);
-        exit(errno);
-    }
+    // in_addr server_addr;
+    // if (inet_aton(argv[1], &server_addr) == 0) {
+    //     perror(argv[1]);
+    //     exit(errno);
+    // }
 
-    in_addr client_addr;
-    if (inet_aton(argv[2], &client_addr) == 0) {
-        perror(argv[2]);
-        exit(errno);
-    }
+    // in_addr client_addr;
+    // if (inet_aton(argv[2], &client_addr) == 0) {
+    //     perror(argv[2]);
+    //     exit(errno);
+    // }
 
-    if (argv[3])
-        myport = atoi(argv[3]);
+    if (argv[1])
+        myport = atoi(argv[1]);
     else
         myport = 7838;
 
-    if (argv[4])
-        lisnum = atoi(argv[4]);
+    if (argv[2])
+        lisnum = atoi(argv[2]);
     else
         lisnum = 4;
 
@@ -80,11 +80,13 @@ int main(int argc, char **argv) {
             perror("accept");
             exit(errno);
         } else {
-            printf("server: got connection from %s, port %d, socket %d\n",
+            printf("controller: got connection from %s, port %d, socket %d\n",
                     inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port),
                     new_fd);
-            if (their_addr.sin_addr.s_addr == server_addr.s_addr) server_fd = new_fd;
-            else client_fd = new_fd;
+            int len = recv(new_fd, buf, sizeof(buf), 0);
+            printf("%s\n", buf);
+            if (buf[0] == 's') server_fd = new_fd;
+            if (buf[0] == 'c') client_fd = new_fd;
         }
     }
 

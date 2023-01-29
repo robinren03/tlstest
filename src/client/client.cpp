@@ -2,12 +2,28 @@
 #include <sys/socket.h>
 #include "../common/conf.h"
 
+void krx_ssl_client_info_callback(const SSL* ssl, int where, int ret) {
+
+  if(ret == 0) {
+    printf("-- krx_ssl_info_callback: error occured.\n");
+    return;
+  }
+ 
+  SSL_WHERE_INFO(ssl, where, SSL_CB_LOOP, "LOOP", "client");
+  SSL_WHERE_INFO(ssl, where, SSL_CB_HANDSHAKE_START, "HANDSHAKE START", "client");
+  SSL_WHERE_INFO(ssl, where, SSL_CB_HANDSHAKE_DONE, "HANDSHAKE DONE", "client");
+
+}
+
 T_Client::T_Client(SSL_CTX* ctx, int _fd):fd(_fd){
+    socket_buf = new char[MAXBUF];
+    ssl_buf = new char[MAXBUF];
     ssl = SSL_new(ctx);
     if (ssl == NULL) {
         puts("Can not create new ssl");
         exit(-1);
     }
+    SSL_set_info_callback(ssl, krx_ssl_client_info_callback);
     out_bio = BIO_new(BIO_s_mem());
     in_bio = BIO_new(BIO_s_mem());
     if (out_bio == NULL) {
@@ -21,7 +37,7 @@ T_Client::T_Client(SSL_CTX* ctx, int _fd):fd(_fd){
     BIO_set_mem_eof_return(out_bio, -1);
     BIO_set_mem_eof_return(in_bio, -1);
     SSL_set_bio(ssl, in_bio, out_bio);
-    SSL_set_accept_state(ssl);
+    SSL_set_connect_state(ssl);
 }
 
 T_Client::~T_Client(){
@@ -32,36 +48,36 @@ T_Client::~T_Client(){
 }
 
 int T_Client::traffic_in(){
-    if (fd >= 0) {
-        int len = recv(fd, socket_buf, sizeof(socket_buf), 0);
-        int written = BIO_write(in_bio, socket_buf, len);
-        if(written > 0) {
+    printf("Traffic in\n");
+    int len = recv(fd, socket_buf, sizeof(socket_buf), 0);
+    int written = BIO_write(in_bio, socket_buf, len);
+    printf("Len is %d, written is %d, write is %s\n", len, written, socket_buf);
+    if(written > 0) {
             if(!SSL_is_init_finished(ssl)) SSL_do_handshake(ssl);
-        }
-        return written;
     }
-    return -1;
+    return written;
 }
 
 int T_Client::traffic_out() {
-    if (fd >= 0) {
-        int pending = BIO_ctrl_pending(out_bio); // Make sure the data is fine, for use of handshaking only
-        if(pending > 0) {
-            int sock_len = BIO_read(out_bio, socket_buf, sizeof(socket_buf));
-            if (sock_len > 0) return send(fd, socket_buf, sock_len, 0);
-        } 
-    }
+    printf("Traffic out\n");
+    int pending = BIO_ctrl_pending(out_bio); // Make sure the data is fine, for use of handshaking only
+    if(pending > 0) {
+        int sock_len = BIO_read(out_bio, socket_buf, sizeof(socket_buf));
+        printf("sock_len is %d, write is %s\n", sock_len, socket_buf);
+        if (sock_len > 0) return send(fd, socket_buf, sock_len, 0);
+    } 
     return -1;
 }
 void T_Client::handshake(){
-    while(!SSL_is_init_finished(ssl)) {
-        SSL_do_handshake(ssl);
-        traffic_out();
-        traffic_in();
-        traffic_out();
-        traffic_in();
-        printf("One round of handshake finished\n");
-    } 
+    int r = SSL_do_handshake(ssl);
+    traffic_out();
+    printf("%s\n", socket_buf);
+    traffic_in();
+    printf("%s\n", socket_buf);
+    traffic_out();
+    printf("%s\n", socket_buf);
+    traffic_in();
+    printf("%s\n", socket_buf);
 }
 
 int T_Client::client_send(char* buf, int len){

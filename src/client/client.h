@@ -1,6 +1,7 @@
 #ifndef _TLSTEST_CLIENT
 #define _TLSTEST_CLIENT
 #include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <openssl/bio.h>
 
 class T_Client{

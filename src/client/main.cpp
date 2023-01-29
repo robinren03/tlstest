@@ -8,8 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <openssl/ssl.h>
-#include <openssl/ssl2.h>
-#include <openssl/err.h>
+#include <openssl/ssl3.h>
 #include "client.h"
 #include "../common/conf.h"
 #include "../common/instruction.h"
@@ -43,8 +42,8 @@ int main(int argc, char **argv)
     char buffer[MAXBUF + 1];
     SSL_CTX *ctx;
 
-    if (argc != 7) {
-        printf("wrong format of arguments, please follow the guidelines on README");
+    if (argc != 5) {
+        printf("wrong format of arguments, please follow the guidelines on README\n");
         exit(0);
     }
 
@@ -56,11 +55,14 @@ int main(int argc, char **argv)
         ERR_print_errors_fp(stdout);
         exit(1);
     }
-
-    int valid = SSL_CTX_set_cipher_list(ctx, SSL2_TXT_DES_64_CBC_WITH_MD5);
-    if (valid) {
+    
+    int valid = SSL_CTX_set_cipher_list(ctx, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    if (valid != 1) {
         ERR_print_errors_fp(stdout);
+        exit(1);
     }
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL); 
+
 
     /* 创建一个 socket 用于 tcp 通信 */
     if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
@@ -88,6 +90,7 @@ int main(int argc, char **argv)
     
     T_Client* cli = new T_Client(ctx, sockfd);
     cli->handshake();
+    
     /* build a new ssl based on ctx
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, sockfd);
@@ -108,9 +111,9 @@ int main(int argc, char **argv)
 
     bzero(&dest, sizeof(dest));
     dest.sin_family = AF_INET;
-    dest.sin_port = htons(atoi(argv[6]));
-    if (inet_aton(argv[5], (struct in_addr *) &dest.sin_addr.s_addr) == 0) {
-        perror(argv[5]);
+    dest.sin_port = htons(atoi(argv[4]));
+    if (inet_aton(argv[3], (struct in_addr *) &dest.sin_addr.s_addr) == 0) {
+        perror(argv[3]);
         exit(errno);
     }
     printf("controller address created\n");
@@ -122,6 +125,9 @@ int main(int argc, char **argv)
     }
     printf("controller connected\n");
 
+    bzero(buffer, MAXBUF + 1);
+    strcpy(buffer, "client");
+    send(ctrl_fd, buffer, strlen(buffer), 0);
 
     /* 接收对方发过来的消息，最多接收 MAXBUF 个字节 */
     bzero(buffer, MAXBUF + 1);
