@@ -83,7 +83,7 @@ int main(int argc, char **argv) {
             printf("controller: got connection from %s, port %d, socket %d\n",
                     inet_ntoa(their_addr.sin_addr), ntohs(their_addr.sin_port),
                     new_fd);
-            int len = recv(new_fd, buf, sizeof(buf), 0);
+            int len = recv(new_fd, buf, MAXBUF, 0);
             printf("%s\n", buf);
             if (buf[0] == 's') server_fd = new_fd;
             if (buf[0] == 'c') client_fd = new_fd;
@@ -94,6 +94,8 @@ int main(int argc, char **argv) {
     BeastDecrypter* beast = new BeastDecrypter(MAXBUF, 16, ctrl);
     if (beast->run("password:12345", "password")) printf("A successful BEAST attack!\n");
         else printf("BEAST attack fails\n");
+    ctrl->send_client_instruction(T_Instr::SHUTDOWN_CONNECTION, nullptr, 0);
+    ctrl->send_server_instruction(T_Instr::SHUTDOWN_CONNECTION, nullptr, 0);
     close(client_fd);
     close(server_fd);
     close(sockfd);

@@ -49,7 +49,7 @@ T_Client::~T_Client(){
 
 int T_Client::traffic_in(){
     printf("Traffic in\n");
-    int len = recv(fd, socket_buf, sizeof(socket_buf), 0);
+    int len = recv(fd, socket_buf, MAXBUF, 0);
     int written = BIO_write(in_bio, socket_buf, len);
     printf("Len is %d, written is %d, write is %s\n", len, written, socket_buf);
     if(written > 0) {
@@ -62,14 +62,14 @@ int T_Client::traffic_out() {
     printf("Traffic out\n");
     int pending = BIO_ctrl_pending(out_bio); // Make sure the data is fine, for use of handshaking only
     if(pending > 0) {
-        int sock_len = BIO_read(out_bio, socket_buf, sizeof(socket_buf));
-        printf("sock_len is %d, write is %s\n", sock_len, socket_buf);
+        int sock_len = BIO_read(out_bio, socket_buf, MAXBUF);
+        printf("pending is %d, sock_len is %d, write is %s\n", pending, sock_len, socket_buf);
         if (sock_len > 0) return send(fd, socket_buf, sock_len, 0);
     } 
     return -1;
 }
 void T_Client::handshake(){
-    int r = SSL_do_handshake(ssl);
+    SSL_do_handshake(ssl);
     traffic_out();
     printf("%s\n", socket_buf);
     traffic_in();
@@ -87,7 +87,7 @@ int T_Client::client_send(char* buf, int len){
 
 int T_Client::client_recv(char* buf){
     traffic_in();
-    return SSL_read(ssl, buf, sizeof(buf));
+    return SSL_read(ssl, buf, MAXBUF);
 }
 
 char* T_Client::get_encrypted_text(){

@@ -50,7 +50,7 @@ T_Server::~T_Server(){
 
 int T_Server::traffic_in(){
     printf("Traffic in\n");
-    int len = recv(fd, socket_buf, sizeof(socket_buf), 0);
+    int len = recv(fd, socket_buf, MAXBUF, 0);
     int written = BIO_write(in_bio, socket_buf, len);
     printf("Len is %d, written is %d, write is %s\n", len, written, socket_buf);
     if(written > 0) {
@@ -64,8 +64,7 @@ int T_Server::traffic_in(){
 int T_Server::traffic_out() {
     printf("Traffic out\n");
     int pending = BIO_ctrl_pending(out_bio); // Make sure the data is fine, for use of handshaking only
-    while (pending == 0) pending = BIO_ctrl_pending(out_bio);
-    int sock_len = BIO_read(out_bio, socket_buf, sizeof(socket_buf));
+    int sock_len = BIO_read(out_bio, socket_buf, MAXBUF);
     printf("sock_len is %d, write is %s\n", sock_len, socket_buf);
     if (sock_len > 0) return send(fd, socket_buf, sock_len, 0);
 }
@@ -84,7 +83,7 @@ int T_Server::server_send(char* buf, int len){
 
 int T_Server::server_recv(char* buf){
     traffic_in();
-    return SSL_read(ssl, buf, sizeof(buf));
+    return SSL_read(ssl, buf, MAXBUF);
 }
 
 char* T_Server::get_encrypted_text(){

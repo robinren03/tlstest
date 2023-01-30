@@ -1,8 +1,7 @@
 #ifndef _TLSTEST_COMMON_CONF
 #define _TLSTEST_COMMON_CONF
 
-#define SOCKET_BUF_MAXLEN 4096
-#define MAXBUF 1024
+#define MAXBUF 4096
 
 #define SSL_WHERE_INFO(ssl, w, flag, msg, name) {          \
     if(w & flag) {                                         \
