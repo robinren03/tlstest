@@ -10,6 +10,7 @@ private:
     SSL* ssl;
     char* socket_buf;
     char* ssl_buf;
+    int encrypted_len;
     int fd; //the socket file number
     int traffic_in();
     int traffic_out();
@@ -22,6 +23,7 @@ public:
     void show_certs();
     int server_send(char* buf, int len);
     int server_recv(char* buf); //buf here is allocated by socket_buf
+    int get_encrypted_len();
     char* get_encrypted_text();
 };
 

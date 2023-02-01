@@ -30,7 +30,7 @@ public:
         free(first_r);
     }
 
-    void send_malicious_message(const char* buf, int len, char* recv); //get encrypt
+    int send_malicious_message(const char* buf, int len, char* recv); //get encrypt
        
     int decrypt_method(char* find);  
 
@@ -38,7 +38,7 @@ public:
     
     bool run(const std::string secret, const std::string known_head);
 
-    void xor_block(const char* a, const char* b, const char* c, char* buf);
+    int xor_block(const char* a, const char* b, const char* c, int len_a, int len_b, int len_c,char* buf);
 };
 
 #endif

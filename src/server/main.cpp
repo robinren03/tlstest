@@ -11,9 +11,8 @@
 #include <openssl/err.h>
 #include <openssl/ssl2.h>
 #include "server.h"
+#include "../common/conf.h"
 #include "../common/instruction.h"
-
-#define MAXBUF 1024
 
 int main(int argc, char **argv) {
     int sockfd, new_fd;
@@ -158,12 +157,29 @@ int main(int argc, char **argv) {
         else
             printf("消息接收失败！错误代码是%d，错误信息是'%s'\n",
             errno, strerror(errno));
+
+        T_Instr inst;
+        len = recv(ctrl_fd, &inst, sizeof(T_Instr), 0);
+        if (len > 0)
+            printf("接收消息成功:'%d'，共%d个字节的数据\n", inst, len);
+        else
+            printf("消息接收失败！错误代码是%d，错误信息是'%s'\n",
+            errno, strerror(errno));
+
         
         bool cont = true;
         while(cont){
             T_Instr inst;
-            int len = recv(ctrl_fd, &inst, sizeof(T_Instr), 1);
-            if (len<=0) break;
+            printf("Waiting for connection\n");
+            len = recv(ctrl_fd, &inst , sizeof(T_Instr), 0);
+            // inst = *(T_Instr*)buffer;
+            if (len <= 0) {
+                printf("消息接收失败！错误代码是%d，错误信息是'%s'\n",
+                    errno, strerror(errno));
+                break;
+            }
+            printf("Inst is %d, len is %d\n",inst, len);
+            bzero(buf, MAXBUF + 1);
             switch (inst){
                 case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:{
                     int len = recv(ctrl_fd, buf, MAXBUF, 0);
@@ -173,6 +189,11 @@ int main(int argc, char **argv) {
                 case T_Instr::SHUTDOWN_CONNECTION: {
                     cont = false;
                     break;
+                }
+
+                case T_Instr::RECEIVED_PLAIN_TO_ME: {
+                    sev->server_recv(buf);
+                    send(ctrl_fd, sev->get_encrypted_text(), sev->get_encrypted_len(), 0);
                 }
 
                 default: break;

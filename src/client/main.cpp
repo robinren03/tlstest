@@ -154,11 +154,28 @@ int main(int argc, char **argv)
         printf("消息'%s'发送成功，共发送了%d个字节！\n",
                buffer, len);
     
+    bzero(buffer, MAXBUF + 1);
+        /* 接收客户端的消息 */
+    T_Instr inst;
+    len = recv(ctrl_fd, &inst, sizeof(T_Instr), 0);
+    if (len > 0)
+        printf("接收消息成功:'%d'，共%d个字节的数据\n", inst, len);
+    else
+        printf("消息接收失败！错误代码是%d，错误信息是'%s'\n",
+        errno, strerror(errno));
+    
     bool cont = true;
     while(cont){
         T_Instr inst;
-        int len = recv(ctrl_fd, &inst, sizeof(T_Instr), 1);
-        if (len<=0) break;
+        len = recv(ctrl_fd, &inst , sizeof(T_Instr), 0);
+        // inst = *(T_Instr*)buffer;
+        if (len <= 0) {
+            printf("消息接收失败！错误代码是%d，错误信息是'%s'\n",
+                errno, strerror(errno));
+            break;
+        }
+        printf("Inst is %d, len is %d\n",inst, len);
+        bzero(buffer, MAXBUF + 1);
         switch (inst){
             case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:{
                 int len = recv(ctrl_fd, buffer, MAXBUF, 0);
