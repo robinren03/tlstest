@@ -1,7 +1,9 @@
 #include "beast.h"
 #include "../common/utils.h"
 
-BeastDecrypter::BeastDecrypter(int max_len, int _block_size, T_Controller* _ctrl):block_size(_block_size), ctrl(_ctrl){
+BeastDecrypter::BeastDecrypter(int _max_len, int _block_size, T_Controller* _ctrl):max_len(_max_len), 
+    block_size(_block_size), ctrl(_ctrl)
+{
     buf = new char[max_len];
     ori_recv = new char[max_len];
     first_r = new char[max_len];
@@ -19,12 +21,11 @@ int BeastDecrypter::send_malicious_message(const char* buf, int len, char* recv)
 
 int BeastDecrypter::xor_block(const char* a, const char* b, const char* c, int len_a, int len_b, int len_c, char* buf){
     int min_len = min(min(len_a, len_b), len_c);
-    if (min_len > max_len) exit(-1); // Assertion Failed for the storage
-    for (int i=0; i<min_len; i++)
+    printf("%d %d %d\n", len_a, len_b, len_c);
+    // if (min_len > max_len) exit(-1); // Assertion Failed for the storage
+    for (int i=0; i<min_len; i++){
         buf[i] = a[i] ^ b[i] ^ c[i];
-    buf[min_len]='\0';
-    printf("a is %s, b is %s, c is %s", a, b, c);
-    printf("block len is %d\n", strlen(buf));
+    }
     return min_len;
 }
 
@@ -52,8 +53,9 @@ bool BeastDecrypter::run(const std::string secret, const std::string known_head)
             char* vector_init = ori_recv + (strlen(ori_recv) - block_size - 1);
 
             p_guess[i] = ch;
-
-            int len = xor_block(p_guess, first_r , vector_init, i+1, block_size, len_b, buf); //TODO
+            printf("Before xor\n");
+            int len = xor_block(p_guess, first_r , vector_init, i+1, block_size, block_size, buf); //TODO
+            printf("Been xored %d\n", len);
 
             send_malicious_message(buf, len, last_recv);
 

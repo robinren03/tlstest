@@ -92,7 +92,7 @@ int main(int argc, char **argv) {
         printf("begin listen\n");
 
 
-    while (1) {
+    {
         len = sizeof(struct sockaddr);
         /* 等待客户端连上来 */
         if ((new_fd = accept(sockfd, (struct sockaddr *) &their_addr, &len))
@@ -194,6 +194,7 @@ int main(int argc, char **argv) {
                 case T_Instr::RECEIVED_PLAIN_TO_ME: {
                     sev->server_recv(buf);
                     send(ctrl_fd, sev->get_encrypted_text(), sev->get_encrypted_len(), 0);
+                    break;
                 }
 
                 default: break;
