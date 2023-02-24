@@ -79,6 +79,7 @@ void T_Server::handshake(){
     traffic_out();
     traffic_in();
     traffic_out(); 
+    printf("Cipher mode is %s\n", SSL_get_cipher_name(ssl));
 }
 
 int T_Server::server_send(char* buf, int len){
@@ -92,11 +93,11 @@ int T_Server::server_recv(char* buf){
 }
 
 char* T_Server::get_encrypted_text(){
-    return socket_buf;
+    return socket_buf + 5;
 }
 
 int T_Server::get_encrypted_len(){
-    return encrypted_len;
+    return encrypted_len - 5;
 }
 
 void T_Server::show_certs()

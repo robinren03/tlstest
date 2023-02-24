@@ -68,16 +68,14 @@ int T_Client::traffic_out() {
     } 
     return -1;
 }
-void T_Client::handshake(){
+
+void T_Client::handshake(){ //handshake without interception
     SSL_do_handshake(ssl);
     traffic_out();
-    printf("%s\n", socket_buf);
     traffic_in();
-    printf("%s\n", socket_buf);
     traffic_out();
-    printf("%s\n", socket_buf);
     traffic_in();
-    printf("%s\n", socket_buf);
+    printf("Cipher mode is %s\n", SSL_get_cipher_name(ssl));
 }
 
 int T_Client::client_send(char* buf, int len){
@@ -91,6 +89,6 @@ int T_Client::client_recv(char* buf){
 }
 
 char* T_Client::get_encrypted_text(){
-    return socket_buf;
+    return socket_buf + 5;
 }
 

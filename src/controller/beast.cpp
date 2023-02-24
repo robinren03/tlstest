@@ -21,7 +21,6 @@ int BeastDecrypter::send_malicious_message(const char* buf, int len, char* recv)
 
 int BeastDecrypter::xor_block(const char* a, const char* b, const char* c, int len_a, int len_b, int len_c, char* buf){
     int min_len = min(min(len_a, len_b), len_c);
-    printf("%d %d %d\n", len_a, len_b, len_c);
     // if (min_len > max_len) exit(-1); // Assertion Failed for the storage
     for (int i=0; i<min_len; i++){
         buf[i] = a[i] ^ b[i] ^ c[i];
@@ -30,40 +29,45 @@ int BeastDecrypter::xor_block(const char* a, const char* b, const char* c, int l
 }
 
 bool BeastDecrypter::run(const std::string secret, const std::string known_head) {
-    std::cout << "We have now started the beast decryption" << std::endl;
+    puts("We have now started the beast decryption");
      // padding is the length we need to add to i_know to create a length of 15 bytes (block size- 1)
-    int padding = block_size - (known_head.size() - 1) % block_size;
-    char* p_guess = new char[secret.length() + 1];
-
+    int padding = block_size - 1 - known_head.size() % block_size;
+    char* p_guess = new char[block_size + 5];
+    for (int i=0; i<padding; i++)
+        p_guess[i] = 'a';
+    strcpy(p_guess + padding, known_head.c_str());
+    p_guess[ block_size + 1] = '\0';
     for(int i=known_head.size(); i < secret.size(); i++){
         std::string s;
         if (padding < 0)   
             s = secret.substr(-padding);
         else s = secret;
 
-        p_guess[i+1] = '\0';
         for (char ch=0; ch<256; ch++) {
 
-            std::string pad(padding, 'a');
+            std::string pad;
+            if (padding > 0) {
+                pad = std::string(padding, 'a');
+            } else pad = "";
             pad = pad + s;
 
-            int len_a = send_malicious_message( pad.c_str(), padding + s.length(), first_r);
+            int len_a = send_malicious_message( pad.c_str(), block_size, first_r);
+            // hexify(first_r, len_a);
+            int len_b = send_malicious_message( pad.c_str(), block_size, ori_recv);
+            // hexify(ori_recv, len_b);
+            char* vector_init = ori_recv + (len_b - block_size);
+            p_guess[block_size - 1] = ch;
+            int len = xor_block(p_guess, first_r , vector_init, block_size, block_size, block_size, buf); 
             
-            int len_b = send_malicious_message( pad.c_str(), padding + s.length(), ori_recv);
-            char* vector_init = ori_recv + (strlen(ori_recv) - block_size - 1);
-
-            p_guess[i] = ch;
-            printf("Before xor\n");
-            int len = xor_block(p_guess, first_r , vector_init, i+1, block_size, block_size, buf); //TODO
-            printf("Been xored %d\n", len);
-
-            send_malicious_message(buf, len, last_recv);
-
+            int len_c = send_malicious_message(buf, block_size, last_recv);
+            // hexify(last_recv, len_c);
             if (check(ori_recv, last_recv, block_size)){
                 padding--;
+                for (int j=1; j<block_size; j++)
+                    p_guess[j-1] = p_guess[j];
                 break;
             }
-            else if (i == 255){
+            else if (ch == 255){
                 printf("Cannot find answer at %d bit\n", i);
                 return false;
             }

@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <openssl/ssl.h>
-#include <openssl/ssl3.h>
+#include <openssl/ssl2.h>
 #include "client.h"
 #include "../common/conf.h"
 #include "../common/instruction.h"
@@ -50,13 +50,13 @@ int main(int argc, char **argv)
     /* SSL 库初始化，参看 ssl-server.c 代码 */
     SSL_library_init();
     SSL_load_error_strings();
-    ctx = SSL_CTX_new(SSLv23_client_method());
+    ctx = SSL_CTX_new(TLSv1_client_method());
     if (ctx == NULL) {
         ERR_print_errors_fp(stdout);
         exit(1);
     }
     
-    int valid = SSL_CTX_set_cipher_list(ctx, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    int valid = SSL_CTX_set_cipher_list(ctx, "3DES");
     if (valid != 1) {
         ERR_print_errors_fp(stdout);
         exit(1);
@@ -153,9 +153,7 @@ int main(int argc, char **argv)
     else
         printf("消息'%s'发送成功，共发送了%d个字节！\n",
                buffer, len);
-    
-    bzero(buffer, MAXBUF + 1);
-        /* 接收客户端的消息 */
+       
     T_Instr inst;
     len = recv(ctrl_fd, &inst, sizeof(T_Instr), 0);
     if (len > 0)

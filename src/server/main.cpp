@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <openssl/err.h>
-#include <openssl/ssl2.h>
+#include <openssl/tls1.h>
 #include "server.h"
 #include "../common/conf.h"
 #include "../common/instruction.h"
@@ -27,23 +27,23 @@ int main(int argc, char **argv) {
         exit(0);
     }
 
-    myport = atoi(argv[1]); //7838
+    myport = atoi(argv[1]);
 
-    lisnum = atoi(argv[2]); //2
+    lisnum = atoi(argv[2]);
 
     /* SSL 库初始化 */
     SSL_library_init();
     /* 载入所有 SSL 错误消息 */
     SSL_load_error_strings();
     /* 以 SSL V2 和 V3 标准兼容方式产生一个 SSL_CTX ，即 SSL Content Text */
-    ctx = SSL_CTX_new(SSLv23_server_method());
+    ctx = SSL_CTX_new(TLSv1_server_method());
     /* 也可以用 SSLv2_server_method() 或 SSLv3_server_method() 单独表示 V2 或 V3标准 */
     if (ctx == NULL) {
         ERR_print_errors_fp(stdout);
         exit(1);
     }
 
-    int valid = SSL_CTX_set_cipher_list(ctx, "ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+    int valid = SSL_CTX_set_cipher_list(ctx, "3DES,SHA1");
     if (valid != 1) {
         ERR_print_errors_fp(stdout);
     }

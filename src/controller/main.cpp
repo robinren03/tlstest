@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     send(client_fd, (char*)&inst, sizeof(T_Instr), 0);
     T_Controller* ctrl = new T_Controller(server_fd, client_fd);
     BeastDecrypter* beast = new BeastDecrypter(MAXBUF, 16, ctrl);
-    if (beast->run("password:12345", "password")) printf("A successful BEAST attack!\n");
+    if (beast->run("password1", "password")) printf("A successful BEAST attack!\n");
         else printf("BEAST attack fails\n");
     ctrl->send_client_instruction(T_Instr::SHUTDOWN_CONNECTION, nullptr, 0);
     ctrl->send_server_instruction(T_Instr::SHUTDOWN_CONNECTION, nullptr, 0);
