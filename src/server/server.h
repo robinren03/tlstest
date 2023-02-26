@@ -22,6 +22,7 @@ public:
     void handshake();
     void show_certs();
     int server_send(char* buf, int len);
+    int plain_send(char* buf, int len);
     int server_recv(char* buf); //buf here is allocated by socket_buf
     int get_encrypted_len();
     char* get_encrypted_text();

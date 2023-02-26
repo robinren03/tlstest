@@ -184,6 +184,25 @@ int main(int argc, char **argv)
                 cont = false;
                 break;
             }
+
+            case T_Instr::PLAIN_MESSAGE_TO_PEER: {
+                int len = recv(ctrl_fd, buffer, MAXBUF, 0);
+                cli->plain_send(buffer, len);
+                break;
+            }
+
+            case T_Instr::RECEIVED_PLAIN_TO_ME: {
+                cli->client_recv(buffer);
+                send(ctrl_fd, cli->get_encrypted_text(), cli->get_encrypted_len(), 0);
+                break;
+            }
+
+            case T_Instr::RECEIVED_CHECK_VALID: {
+                int len = cli->client_recv(buffer);
+                bool isValid = (len>0);
+                send(ctrl_fd, (char*)&isValid, sizeof(bool), 0);
+                break;
+            }
             default: break;
         }
     }

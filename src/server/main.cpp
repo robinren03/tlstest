@@ -182,20 +182,33 @@ int main(int argc, char **argv) {
             bzero(buf, MAXBUF + 1);
             switch (inst){
                 case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:{
-                    int len = recv(ctrl_fd, buf, MAXBUF, 0);
-                    sev->server_send(buf, len);
-                    break;
-                }
-                case T_Instr::SHUTDOWN_CONNECTION: {
-                    cont = false;
-                    break;
-                }
+                int len = recv(ctrl_fd, buf, MAXBUF, 0);
+                sev->server_send(buf, len);
+                break;
+            }
+            case T_Instr::SHUTDOWN_CONNECTION: {
+                cont = false;
+                break;
+            }
 
-                case T_Instr::RECEIVED_PLAIN_TO_ME: {
-                    sev->server_recv(buf);
-                    send(ctrl_fd, sev->get_encrypted_text(), sev->get_encrypted_len(), 0);
-                    break;
-                }
+            case T_Instr::PLAIN_MESSAGE_TO_PEER: {
+                int len = recv(ctrl_fd, buf, MAXBUF, 0);
+                sev->plain_send(buf, len);
+                break;
+            }
+
+            case T_Instr::RECEIVED_PLAIN_TO_ME: {
+                sev->server_recv(buf);
+                send(ctrl_fd, sev->get_encrypted_text(), sev->get_encrypted_len(), 0);
+                break;
+            }
+
+            case T_Instr::RECEIVED_CHECK_VALID: {
+                int len = sev->server_recv(buf);
+                bool isValid = (len>0);
+                send(ctrl_fd, (char*)&isValid, sizeof(bool), 0);
+                break;
+            }
 
                 default: break;
             }

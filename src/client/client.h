@@ -15,6 +15,7 @@ private:
     int traffic_in();
     int traffic_out();
     bool is_handshaking;
+    int encrypted_len;
 public:
     T_Client(SSL_CTX* ctx, int _fd);
     ~T_Client();
@@ -22,7 +23,9 @@ public:
     void handshake();
     int client_send(char* buf, int len);
     int client_recv(char* buf); //buf here is allocated by socket_buf
+    int plain_send(char* buf, int len);
     char* get_encrypted_text();
+    int get_encrypted_len();
 };
 
 #endif

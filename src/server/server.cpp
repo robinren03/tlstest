@@ -87,6 +87,10 @@ int T_Server::server_send(char* buf, int len){
     return traffic_out();
 }
 
+int T_Server::plain_send(char* buf, int len){
+    return send(fd, socket_buf, len, 0);
+}
+
 int T_Server::server_recv(char* buf){
     traffic_in();
     return SSL_read(ssl, buf, MAXBUF);
