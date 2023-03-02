@@ -50,13 +50,13 @@ int main(int argc, char **argv)
     /* SSL 库初始化，参看 ssl-server.c 代码 */
     SSL_library_init();
     SSL_load_error_strings();
-    ctx = SSL_CTX_new(TLSv1_client_method());
+    ctx = SSL_CTX_new(SSLv3_client_method());
     if (ctx == NULL) {
         ERR_print_errors_fp(stdout);
         exit(1);
     }
     
-    int valid = SSL_CTX_set_cipher_list(ctx, "3DES");
+    int valid = SSL_CTX_set_cipher_list(ctx, "CBC");
     if (valid != 1) {
         ERR_print_errors_fp(stdout);
         exit(1);

@@ -35,15 +35,15 @@ int main(int argc, char **argv) {
     SSL_library_init();
     /* 载入所有 SSL 错误消息 */
     SSL_load_error_strings();
-    /* 以 SSL V2 和 V3 标准兼容方式产生一个 SSL_CTX ，即 SSL Content Text */
-    ctx = SSL_CTX_new(TLSv1_server_method());
-    /* 也可以用 SSLv2_server_method() 或 SSLv3_server_method() 单独表示 V2 或 V3标准 */
+
+    ctx = SSL_CTX_new(SSLv3_server_method());
+    
     if (ctx == NULL) {
         ERR_print_errors_fp(stdout);
         exit(1);
     }
 
-    int valid = SSL_CTX_set_cipher_list(ctx, "3DES,SHA1");
+    int valid = SSL_CTX_set_cipher_list(ctx, "CBC");
     if (valid != 1) {
         ERR_print_errors_fp(stdout);
     }
