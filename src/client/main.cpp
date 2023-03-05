@@ -8,7 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <openssl/ssl.h>
-#include <openssl/ssl2.h>
+#include <openssl/ssl3.h>
 #include "client.h"
 #include "../common/conf.h"
 #include "../common/instruction.h"
@@ -56,7 +56,7 @@ int main(int argc, char **argv)
         exit(1);
     }
     
-    int valid = SSL_CTX_set_cipher_list(ctx, "CBC");
+    int valid = SSL_CTX_set_cipher_list(ctx, "DES-CBC-SHA:DES-CBC3-SHA:IDEA-CBC-SHA");
     if (valid != 1) {
         ERR_print_errors_fp(stdout);
         exit(1);

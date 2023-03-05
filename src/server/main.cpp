@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    int valid = SSL_CTX_set_cipher_list(ctx, "CBC");
+    int valid = SSL_CTX_set_cipher_list(ctx, "ALL");
     if (valid != 1) {
         ERR_print_errors_fp(stdout);
     }

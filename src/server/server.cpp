@@ -1,11 +1,13 @@
 #include "server.h"
 #include <sys/socket.h>
 #include "../common/conf.h"
+#include <openssl/err.h>
 
 void krx_ssl_server_info_callback(const SSL* ssl, int where, int ret) {
 
   if(ret == 0) {
     printf("-- krx_ssl_info_callback: error occured.\n");
+    ERR_print_errors_fp(stdout);
     return;
   }
  

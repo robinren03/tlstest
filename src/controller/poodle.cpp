@@ -59,6 +59,7 @@ bool PoodleDecrypter::run(const std::string secret, const std::string known_head
             ctrl->recv_server_message((char*)&isValid);
             if (isValid) {
                 char real_ch = last_recv[i+pad] ^ last_recv[recv_len - block_size - 1] ^ (block_size - 1);
+                printf("%c", real_ch);
                 if (real_ch != secret[i]) return false;
                 pad--;
             }

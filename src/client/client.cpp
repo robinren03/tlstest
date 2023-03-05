@@ -1,11 +1,14 @@
 #include "client.h"
 #include <sys/socket.h>
 #include "../common/conf.h"
+#include "../common/utils.h"
+#include <openssl/err.h>
 
 void krx_ssl_client_info_callback(const SSL* ssl, int where, int ret) {
 
   if(ret == 0) {
     printf("-- krx_ssl_info_callback: error occured.\n");
+    ERR_print_errors_fp(stdout);
     return;
   }
  
@@ -52,6 +55,7 @@ int T_Client::traffic_in(){
     int len = recv(fd, socket_buf, MAXBUF, 0);
     encrypted_len = len;
     int written = BIO_write(in_bio, socket_buf, len);
+    // hexify(socket_buf, encrypted_len);
     printf("Len is %d, written is %d, write is %s\n", len, written, socket_buf);
     if(written > 0) {
             if(!SSL_is_init_finished(ssl)) SSL_do_handshake(ssl);
@@ -60,12 +64,13 @@ int T_Client::traffic_in(){
 }
 
 int T_Client::traffic_out() {
-    printf("Traffic out\n");
+    // printf("Traffic out\n");
     int pending = BIO_ctrl_pending(out_bio); // Make sure the data is fine, for use of handshaking only
     if(pending > 0) {
         int sock_len = BIO_read(out_bio, socket_buf, MAXBUF);
         encrypted_len = sock_len;
         printf("pending is %d, sock_len is %d, write is %s\n", pending, sock_len, socket_buf);
+        // hexify(socket_buf, encrypted_len);
         if (sock_len > 0) return send(fd, socket_buf, sock_len, 0);
     } 
     return -1;
