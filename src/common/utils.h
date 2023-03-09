@@ -10,6 +10,7 @@ bool check(const char* a, const char* b, int len){
         if (a[i] != b[i]) return false;
     return true;
 }
+inline int round_up(int a, int mod){ return ((a + mod - 1) / mod)* mod; }
 
 #ifdef DEBUG
 void hexify(const char* a, int len){

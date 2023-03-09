@@ -1,8 +1,8 @@
 #include "client.h"
-#include <sys/socket.h>
 #include "../common/conf.h"
 #include "../common/utils.h"
 #include <openssl/err.h>
+#include <sys/socket.h>
 
 void krx_ssl_client_info_callback(const SSL* ssl, int where, int ret) {
 

