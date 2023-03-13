@@ -17,8 +17,7 @@ void krx_ssl_server_info_callback(const SSL* ssl, int where, int ret) {
 
 }
 
-T_Server::T_Server(SSL_CTX* ctx, int _fd):fd(_fd){
-    socket_buf = new char[MAXBUF];
+T_Server::T_Server(SSL_CTX* ctx){
     ssl_buf = new char[MAXBUF];
     ssl = SSL_new(ctx);
     if (ssl == NULL) {
@@ -46,34 +45,19 @@ T_Server::T_Server(SSL_CTX* ctx, int _fd):fd(_fd){
 T_Server::~T_Server(){
     SSL_shutdown(ssl);
     SSL_free(ssl);
-    delete[] socket_buf;
     delete[] ssl_buf;
 }
 
 int T_Server::traffic_in(){
-    printf("Traffic in\n");
-    int len = recv(fd, socket_buf, MAXBUF, 0);
-    encrypted_len = len;
-    int written = BIO_write(in_bio, socket_buf, len);
-    printf("Len is %d, written is %d, write is %s\n", len, written, socket_buf);
+    int written = link->link_recv();
     if(written > 0) {
-        if(!SSL_is_init_finished(ssl)) {
-            SSL_do_handshake(ssl);
-        }
-  }
-  return written;
+            if(!SSL_is_init_finished(ssl)) SSL_do_handshake(ssl);
+    }
+    return written;
 }
 
 int T_Server::traffic_out() {
-    printf("Traffic out\n");
-    int pending = BIO_ctrl_pending(out_bio);
-    if (pending) {
-        int sock_len = BIO_read(out_bio, socket_buf, MAXBUF);
-        encrypted_len = sock_len;
-        printf("sock_len is %d, write is %s\n", sock_len, socket_buf);
-        if (sock_len > 0) return send(fd, socket_buf, sock_len, 0);
-    }
-    return -1;
+    return link->link_send();
 }
 
 void T_Server::handshake(){
@@ -89,8 +73,9 @@ int T_Server::server_send(char* buf, int len){
     return traffic_out();
 }
 
-int T_Server::plain_send(char* buf, int len){
-    return send(fd, socket_buf, len, 0);
+int T_Server::plain_send(const char* buf, int len){
+    BIO_write(out_bio,  buf, len);
+    return link -> link_send();
 }
 
 int T_Server::server_recv(char* buf){
@@ -103,7 +88,7 @@ char* T_Server::get_encrypted_text(){
 }
 
 int T_Server::get_encrypted_len(){
-    return encrypted_len - 5;
+    return link->get_data_len() - 5;
 }
 
 void T_Server::show_certs()
@@ -130,3 +115,12 @@ void T_Server::show_certs()
         printf("无证书信息！\n");
 }
 
+void T_Server::set_tcplink_fd(int fd){
+    link = new TCPDirectLink(out_bio, in_bio, fd);
+    socket_buf = link->get_data_ptr();
+}
+
+void T_Server::set_fakelink(BIO* peer_out, BIO* peer_in, char* data){
+    socket_buf = data;
+    link = new FakeDirectLink(out_bio, in_bio, peer_out, peer_in, data);
+}

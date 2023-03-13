@@ -2,26 +2,23 @@
 #include "../common/conf.h"
 #include <sys/socket.h>
 
-T_Controller::T_Controller(int _server_fd, int _client_fd):server_fd(_server_fd), client_fd(_client_fd){
-
+T_Controller::T_Controller(CtrlLink* _sev_lk, CtrlLink* _cli_lk):sev_lk(_sev_lk), cli_lk(_cli_lk){
 }
 
 void T_Controller::send_client_instruction(T_Instr ins, const char* buf, int len){
-    // printf("Instruction is %d Len is %d\n", ins, len);
-    send(client_fd, (char*)&ins, sizeof(T_Instr), 0);
-    if (len > 0) send(client_fd, buf, len, 0);  
+    cli_lk->link_send((char*)&ins, sizeof(T_Instr));
+    if (len > 0) cli_lk->link_send(buf, len);  
 }
 
 void T_Controller::send_server_instruction(T_Instr ins, const char* buf, int len){
-    // printf("Instruction is %d, len is %d\n", ins, len);
-    send(server_fd, (char*)&ins, sizeof(T_Instr), 0);
-    if (len > 0) send(server_fd, buf, len, 0); 
+    sev_lk->link_send((char*)&ins, sizeof(T_Instr));
+    if (len > 0) sev_lk->link_send(buf, len); 
 }
 
 int T_Controller::recv_client_message(char* buf){
-    return recv(client_fd, buf, MAXBUF, 0);
+    return cli_lk->link_recv(buf);
 }
 
 int T_Controller::recv_server_message(char* buf){
-    return recv(server_fd, buf, MAXBUF, 0);
+    return cli_lk->link_recv(buf);
 }

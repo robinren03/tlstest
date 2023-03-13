@@ -8,9 +8,9 @@
 
 class Link{
 protected:
-    bool isReal;
     char *data;
     int data_len;
+    bool isReal;
 public:
     Link(bool _isReal):isReal(_isReal){
         data_len = 0;
@@ -25,7 +25,7 @@ public:
     virtual int link_recv()=0;
 };
 
-class FakeDirectLink : private Link{
+class FakeDirectLink : public Link{
 private:
     BIO *my_out, *my_in;
     BIO *peer_out, *peer_in;
@@ -55,12 +55,12 @@ public:
     }
 };
 
-class TCPDirectLink : private Link{
+class TCPDirectLink : public Link{
 private:
     int fd;
     BIO* my_out, *my_in;
 public:
-    TCPDirectLink(BIO* _my_out , BIO* _my_in,int _fd):Link(true){
+    TCPDirectLink(BIO* _my_out , BIO* _my_in, int _fd):Link(true){
         fd = _fd;
         my_out = _my_out;
         my_in = _my_in;

@@ -18,8 +18,7 @@ void krx_ssl_client_info_callback(const SSL* ssl, int where, int ret) {
 
 }
 
-T_Client::T_Client(SSL_CTX* ctx, int _fd):fd(_fd){
-    socket_buf = new char[MAXBUF];
+T_Client::T_Client(SSL_CTX* ctx){
     ssl_buf = new char[MAXBUF];
     ssl = SSL_new(ctx);
     if (ssl == NULL) {
@@ -46,17 +45,15 @@ T_Client::T_Client(SSL_CTX* ctx, int _fd):fd(_fd){
 T_Client::~T_Client(){
     SSL_shutdown(ssl);
     SSL_free(ssl);
-    delete[] socket_buf;
     delete[] ssl_buf;
 }
 
 int T_Client::traffic_in(){
-    printf("Traffic in\n");
-    int len = recv(fd, socket_buf, MAXBUF, 0);
-    encrypted_len = len;
-    int written = BIO_write(in_bio, socket_buf, len);
-    // hexify(socket_buf, encrypted_len);
-    printf("Len is %d, written is %d, write is %s\n", len, written, socket_buf);
+    if (!link) {
+        puts("Create the link first!");
+        return -1;
+    }
+    int written = link->link_recv();
     if(written > 0) {
             if(!SSL_is_init_finished(ssl)) SSL_do_handshake(ssl);
     }
@@ -64,16 +61,11 @@ int T_Client::traffic_in(){
 }
 
 int T_Client::traffic_out() {
-    // printf("Traffic out\n");
-    int pending = BIO_ctrl_pending(out_bio); // Make sure the data is fine, for use of handshaking only
-    if(pending > 0) {
-        int sock_len = BIO_read(out_bio, socket_buf, MAXBUF);
-        encrypted_len = sock_len;
-        printf("pending is %d, sock_len is %d, write is %s\n", pending, sock_len, socket_buf);
-        // hexify(socket_buf, encrypted_len);
-        if (sock_len > 0) return send(fd, socket_buf, sock_len, 0);
-    } 
-    return -1;
+    if (!link) {
+        puts("Create the link first!");
+        return -1;
+    }
+    return link->link_send();
 }
 
 void T_Client::handshake(){ //handshake without interception
@@ -90,8 +82,10 @@ int T_Client::client_send(char* buf, int len){
     return traffic_out();
 }
 
-int T_Client::plain_send(char* buf, int len){
-    return send(fd, socket_buf, len, 0);
+int T_Client::plain_send(const char* buf, int len){
+    // memcpy(socket_buf, buf, len);
+    BIO_write(out_bio,  buf, len);
+    return link -> link_send();
 }
 
 int T_Client::client_recv(char* buf){
@@ -104,6 +98,15 @@ char* T_Client::get_encrypted_text(){
 }
 
 int T_Client::get_encrypted_len(){
-    return encrypted_len - 5;
+    return link->get_data_len() - 5;
 }
 
+void T_Client::set_tcplink_fd(int fd){
+    link = new TCPDirectLink(out_bio, in_bio, fd);
+    socket_buf = link->get_data_ptr();
+}
+
+void T_Client::set_fakelink(BIO* peer_out, BIO* peer_in, char* data){
+    socket_buf = data;
+    link = new FakeDirectLink(out_bio, in_bio, peer_out, peer_in, data);
+}

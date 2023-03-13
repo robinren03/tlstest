@@ -112,7 +112,7 @@ int main(int argc, char **argv) {
             break;
         }
         */
-        T_Server* sev = new T_Server(ctx, new_fd);
+        T_Server* sev = new T_Server(ctx);
         sev->handshake();
         sev->show_certs();
 
