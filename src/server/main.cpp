@@ -147,11 +147,11 @@ int main(int argc, char **argv) {
         /* 开始处理每个新连接上的数据收发 */
         bzero(buf, MAXBUF + 1);
         strcpy(buf, "server->client");
-        sev->server_send(buf, strlen(buf));
+        sev->send(buf, strlen(buf));
 
         bzero(buf, MAXBUF + 1);
         /* 接收客户端的消息 */
-        len = sev->server_recv(buf);
+        len = sev->recv(buf);
         if (len > 0)
             printf("接收消息成功:'%s'，共%d个字节的数据\n", buf, len);
         else
@@ -183,7 +183,7 @@ int main(int argc, char **argv) {
             switch (inst){
                 case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:{
                 int len = recv(ctrl_fd, buf, MAXBUF, 0);
-                sev->server_send(buf, len);
+                sev->send(buf, len);
                 break;
             }
             case T_Instr::SHUTDOWN_CONNECTION: {
@@ -198,13 +198,13 @@ int main(int argc, char **argv) {
             }
 
             case T_Instr::RECEIVED_PLAIN_TO_ME: {
-                sev->server_recv(buf);
+                sev->recv(buf);
                 send(ctrl_fd, sev->get_encrypted_text(), sev->get_encrypted_len(), 0);
                 break;
             }
 
             case T_Instr::RECEIVED_CHECK_VALID: {
-                int len = sev->server_recv(buf);
+                int len = sev->recv(buf);
                 bool isValid = (len>0);
                 send(ctrl_fd, (char*)&isValid, sizeof(bool), 0);
                 break;

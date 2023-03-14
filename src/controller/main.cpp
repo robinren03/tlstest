@@ -95,7 +95,9 @@ int main(int argc, char **argv) {
     T_Instr inst = T_Instr::SHUTDOWN_CONNECTION;
     send(server_fd, (char*)&inst, sizeof(T_Instr), 0);
     send(client_fd, (char*)&inst, sizeof(T_Instr), 0);
-    T_Controller* ctrl = new T_Controller(server_fd, client_fd);
+    CtrlLink* sev_lk = new TCPCtrlLink(server_fd);
+    CtrlLink* cli_lk = new TCPCtrlLink(client_fd);
+    T_Controller* ctrl = new T_Controller(sev_lk, cli_lk);
     // BeastDecrypter* beast = new BeastDecrypter(MAXBUF, 16, ctrl);
     // if (beast->run("password1", "password")) printf("A successful BEAST attack!\n");
     //     else printf("BEAST attack fails\n");

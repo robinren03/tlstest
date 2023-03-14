@@ -1,6 +1,7 @@
 #ifndef _TLSTEST_CTRL_LINK
 #define _TLSTEST_CTRL_LINK
 #include "conf.h"
+#include "instruction.h"
 #include <openssl/bio.h>
 #include <sys/socket.h>
 #include <cstring>
@@ -11,6 +12,7 @@ protected:
 public:
     CtrlLink(bool _isReal):isReal(_isReal){
     }
+    virtual int link_send_instruction(T_Instr ins, const char* buf, int len)=0;
     virtual int link_send(const char* buf, int len)=0;
     virtual int link_recv(char* buf)=0;
 };
@@ -20,12 +22,16 @@ private:
     char* data;
     int data_len;
 public:
-    FakeCtrlLink(int fd): CtrlLink(false){
+    FakeCtrlLink(): CtrlLink(false){
         data = new char[MAXBUF];
     }
 
     ~FakeCtrlLink(){
         delete[] data;
+    }
+
+    int link_send_instruction(T_Instr ins, const char* buf, int len){
+
     }
 
     int link_send(const char* buf, int len){
@@ -56,6 +62,10 @@ public:
     int link_recv(char* buf){
         int len = recv(fd, buf, MAXBUF, 0);
         return len;
+    }
+
+    int link_send_instruction(T_Instr ins, const char* buf, int len){
+
     }
 };
 

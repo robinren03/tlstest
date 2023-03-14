@@ -68,7 +68,7 @@ void T_Server::handshake(){
     printf("Cipher mode is %s\n", SSL_get_cipher_name(ssl));
 }
 
-int T_Server::server_send(char* buf, int len){
+int T_Server::send(const char* buf, int len){
     SSL_write(ssl, buf, len);
     return traffic_out();
 }
@@ -78,7 +78,7 @@ int T_Server::plain_send(const char* buf, int len){
     return link -> link_send();
 }
 
-int T_Server::server_recv(char* buf){
+int T_Server::recv(char* buf){
     traffic_in();
     return SSL_read(ssl, buf, MAXBUF);
 }

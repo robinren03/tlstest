@@ -4,13 +4,10 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 #include "../common/link.h"
+#include "../common/simulator.h"
 
-class T_Client{
+class T_Client : public T_Simulator{
 private:
-    BIO* out_bio;
-    BIO* in_bio;
-    SSL* ssl;
-    Link* link;
     char* socket_buf;
     char* ssl_buf;
     int traffic_in();
@@ -22,8 +19,8 @@ public:
     void set_tcplink_fd(int fd);
     void set_fakelink(BIO* peer_out, BIO* peer_in, char* data);
     void handshake();
-    int client_send(char* buf, int len);
-    int client_recv(char* buf); //buf here is allocated by socket_buf
+    int send(const char* buf, int len);
+    int recv(char* buf); //buf here is allocated by socket_buf
     int plain_send(const char* buf, int len);
     char* get_encrypted_text();
     int get_encrypted_len();

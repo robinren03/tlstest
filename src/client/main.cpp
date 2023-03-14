@@ -129,6 +129,7 @@ int main(int argc, char **argv)
     }
     printf("controller connected\n");
 
+
     bzero(buffer, MAXBUF + 1);
     strcpy(buffer, "client");
     send(ctrl_fd, buffer, strlen(buffer), 0);
@@ -136,7 +137,7 @@ int main(int argc, char **argv)
     /* 接收对方发过来的消息，最多接收 MAXBUF 个字节 */
     bzero(buffer, MAXBUF + 1);
     /* 接收服务器来的消息 */
-    len = cli->client_recv(buffer);
+    len = cli->recv(buffer);
     if (len > 0)
         printf("接收消息成功:'%s'，共%d个字节的数据\n",
                buffer, len);
@@ -149,7 +150,7 @@ int main(int argc, char **argv)
     bzero(buffer, MAXBUF + 1);
     strcpy(buffer, "from client->server");
     /* 发消息给服务器 */
-    cli->client_send(buffer, strlen(buffer));
+    cli->send(buffer, strlen(buffer));
     if (len < 0)
         printf
             ("消息'%s'发送失败！错误代码是%d，错误信息是'%s'\n",
@@ -181,7 +182,7 @@ int main(int argc, char **argv)
         switch (inst){
             case T_Instr::ENCRYPTED_MESSAGE_TO_PEER:{
                 int len = recv(ctrl_fd, buffer, MAXBUF, 0);
-                cli->client_send(buffer, len);
+                cli->send(buffer, len);
                 break;
             }
             case T_Instr::SHUTDOWN_CONNECTION: {
@@ -196,13 +197,13 @@ int main(int argc, char **argv)
             }
 
             case T_Instr::RECEIVED_PLAIN_TO_ME: {
-                cli->client_recv(buffer);
+                cli->recv(buffer);
                 send(ctrl_fd, cli->get_encrypted_text(), cli->get_encrypted_len(), 0);
                 break;
             }
 
             case T_Instr::RECEIVED_CHECK_VALID: {
-                int len = cli->client_recv(buffer);
+                int len = cli->recv(buffer);
                 bool isValid = (len>0);
                 send(ctrl_fd, (char*)&isValid, sizeof(bool), 0);
                 break;
